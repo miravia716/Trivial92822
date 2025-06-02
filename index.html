@@ -1,25 +1,205 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trivial de Adrián</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Bienvenidos al Trivial Adrian </title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #aaa;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    #categories button, #options button, #next-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      background: #f0f0f0;
+      transition: background-color 0.3s;
+    }
+    #options button:hover, #categories button:hover {
+      background: #e0e0e0;
+    }
+    #options button.correct {
+      background-color: #a6f3a6;
+      border-color: #4CAF50;
+      color: #155724;
+    }
+    #options button.wrong {
+      background-color: #f3a6a6;
+      border-color: #f44336;
+      color: #721c24;
+    }
+    #next-btn {
+      margin-top: 20px;
+      display: none;
+      background-color: #007bff;
+      color: white;
+      border: none;
+    }
+  </style>
 </head>
 <body>
-  <div id="menu">
-    <h1>Bienvenidos al Trivial de Adrián</h1>
-    <button id="startBtn">Comenzar</button>
+
+  <h1>Trivia Médica</h1>
+
+  <div id="category-selection">
+    <h2>Elige una categoría</h2>
+    <div id="categories"></div>
   </div>
 
-  <div id="game" class="hidden">
-    <div id="timer">Tiempo restante: 06:00</div>
-    <div id="question-container">
-      <div id="question">Pregunta...</div>
-      <div id="answers">
-        <button class="answer" data-letter="A">A</button>
-        <button class="answer" data-letter="B">B</button>
-        <button class="answer" data-letter="C">C</button>
+  <div id="quiz" style="display:none;">
+    <p id="question"></p>
+    <div id="options"></div>
+    <button id="next-btn">Siguiente</button>
+    <p id="score" style="text-align:center; font-weight:bold;"></p>
+  </div>
+
+  <script>
+    const triviaData = {
+      "Brote Psicótico": [
+        { question: "¿Qué es un brote psicótico?", options: ["Pérdida temporal de contacto con la realidad", "Alergia", "Infección viral", "Fractura"], answer: 0 },
+        { question: "Síntoma común del brote psicótico:", options: ["Alucinaciones", "Fiebre", "Dolor abdominal", "Visión borrosa"], answer: 0 },
+        { question: "Especialista encargado:", options: ["Psiquiatra", "Cardiólogo", "Dermatólogo", "Neumólogo"], answer: 0 }
+      ],
+      "Diverticulitis": [
+        { question: "¿Qué es diverticulitis?", options: ["Inflamación de divertículos en colon", "Alergia alimentaria", "Trastorno respiratorio", "Anemia"], answer: 0 },
+        { question: "Síntoma común de diverticulitis:", options: ["Dolor abdominal", "Dolor de pecho", "Fiebre amarilla", "Mareo"], answer: 0 }
+      ]
+    };
+
+    const categoriesDiv = document.getElementById('categories');
+    const categorySelection = document.getElementById('category-selection');
+    const quizDiv = document.getElementById('quiz');
+    const questionP = document.getElementById('question');
+    const optionsDiv = document.getElementById('options');
+    const nextBtn = document.getElementById('next-btn');
+    const scoreP = document.getElementById('score');
+
+    let currentCategory = null;
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+
+    // Crear botones de categorías
+    function showCategories() {
+      for (let cat in triviaData) {
+        let btn = document.createElement('button');
+        btn.textContent = cat;
+        btn.onclick = () => startQuiz(cat);
+        categoriesDiv.appendChild(btn);
+      }
+    }
+
+    // Empezar quiz
+    function startQuiz(category) {
+      currentCategory = category;
+      currentQuestion = 0;
+      score = 0;
+      categorySelection.style.display = 'none';
+      quizDiv.style.display = 'block';
+      scoreP.textContent = '';
+      showQuestion();
+    }
+
+    // Mostrar pregunta y opciones
+    function showQuestion() {
+      answered = false;
+      nextBtn.style.display = 'none';
+      const q = triviaData[currentCategory][currentQuestion];
+      questionP.textContent = q.question;
+      optionsDiv.innerHTML = '';
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.onclick = () => selectAnswer(i);
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    // Seleccionar respuesta
+    function selectAnswer(index) {
+      if (answered) return;
+      answered = true;
+      const q = triviaData[currentCategory][currentQuestion];
+      const buttons = optionsDiv.querySelectorAll('button');
+
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if(i === q.answer) btn.classList.add('correct');
+        if(i === index && i !== q.answer) btn.classList.add('wrong');
+      });
+
+      if(index === q.answer) {
+        score++;
+      }
+
+      nextBtn.style.display = 'block';
+    }
+
+    // Siguiente pregunta o resultados
+    nextBtn.onclick = () => {
+      currentQuestion++;
+      if(currentQuestion < triviaData[currentCategory].length) {
+        showQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    // Mostrar resultados finales
+    function showResults() {
+      quizDiv.innerHTML = `
+        <h2>Resultados</h2>
+        <p>Tu puntuación: ${score} de ${triviaData[currentCategory].length}</p>
+        <button id="restart-btn">Volver a jugar</button>
+      `;
+
+      document.getElementById('restart-btn').onclick = () => {
+        quizDiv.style.display = 'none';
+        quizDiv.innerHTML = `
+          <p id="question"></p>
+          <div id="options"></div>
+          <button id="next-btn">Siguiente</button>
+          <p id="score" style="text-align:center; font-weight:bold;"></p>
+        `;
+        // Reasignar elementos y evento nextBtn
+        questionP = document.getElementById('question');
+        optionsDiv = document.getElementById('options');
+        nextBtn = document.getElementById('next-btn');
+        scoreP = document.getElementById('score');
+        nextBtn.style.display = 'none';
+        nextBtn.onclick = () => {
+          currentQuestion++;
+          if(currentQuestion < triviaData[currentCategory].length) {
+            showQuestion();
+          } else {
+            showResults();
+          }
+        };
+        categorySelection.style.display = 'block';
+        categoriesDiv.innerHTML = '';
+        showCategories();
+      };
+    }
+
+    showCategories();
+  </script>
+
+</body>
+</html>
+
         <button class="answer" data-letter="D">D</button>
       </div>
     </div>
